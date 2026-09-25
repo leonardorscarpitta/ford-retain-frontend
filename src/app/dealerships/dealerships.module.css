@@ -7,7 +7,7 @@
   transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s var(--ease-spring);
 }
 .filter:hover { color: var(--fg); transform: translateY(-1px); }
-.filter[aria-current] { color: #fff; border-color: var(--accent); background: rgb(61 139 255 / 0.18); box-shadow: 0 0 20px -6px var(--glow); }
+.filter[aria-current] { color: #fff; border-color: var(--accent); background: rgb(6 111 239 / 0.18); box-shadow: 0 0 20px -6px var(--glow); }
 
 .layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px; align-items: start; }
 
@@ -16,8 +16,8 @@
 .card { display: flex; gap: 14px; padding: 14px 16px; border-radius: 16px; }
 .card:hover { transform: translateX(4px); }
 .card[aria-current] {
-  border-color: rgb(61 139 255 / 0.6);
-  background: linear-gradient(120deg, rgb(61 139 255 / 0.18), rgb(139 92 255 / 0.08));
+  border-color: rgb(6 111 239 / 0.6);
+  background: linear-gradient(120deg, rgb(6 111 239 / 0.18), rgb(23 0 244 / 0.08));
   box-shadow: 0 0 40px -12px var(--glow), inset 3px 0 0 var(--accent);
 }
 .rank { font: 600 0.8rem var(--font-mono), monospace; color: var(--faint); padding-top: 2px; }
@@ -44,7 +44,7 @@
 .mapFrame::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse at center, transparent 60%, rgb(4 6 12 / 0.55));
+    radial-gradient(ellipse at center, transparent 60%, rgb(0 3 26 / 0.55));
 }
 .corners { position: absolute; inset: 14px 14px 30px; pointer-events: none; z-index: 1;
   background:

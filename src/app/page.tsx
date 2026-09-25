@@ -14,11 +14,11 @@ import {
   zoneLabel,
   zoneOrder,
 } from "@/lib/format";
-import { CarHud } from "@/components/car-hud";
 import { CountUp } from "@/components/count-up";
 import { ArrowIcon, BellIcon, BoltIcon, CalendarIcon, GaugeIcon, ToneIcon, WrenchIcon } from "@/components/icons";
 import { Page, PageHeader } from "@/components/page";
 import { RingGauge } from "@/components/ring-gauge";
+import { VehicleExplorer } from "@/components/vehicle/vehicle-explorer";
 import { Sparkline } from "@/components/sparkline";
 import { markNotificationRead } from "./actions";
 import styles from "./dashboard.module.css";
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
               )}
             </div>
           </div>
-          <CarHud components={telemetry.components} />
+          <VehicleExplorer components={telemetry.components} />
         </section>
 
         {/* Battery */}

@@ -8,15 +8,15 @@
   background: rgb(255 255 255 / 0.025); border: 1px solid var(--border);
   transition: transform 0.35s var(--ease-spring), border-color 0.3s, background 0.3s;
 }
-.card:hover { transform: translateX(4px); border-color: var(--border-strong); background: rgb(61 139 255 / 0.06); }
+.card:hover { transform: translateX(4px); border-color: var(--border-strong); background: rgb(6 111 239 / 0.06); }
 .card[data-first] {
-  border-color: rgb(61 139 255 / 0.45);
-  background: linear-gradient(120deg, rgb(61 139 255 / 0.14), rgb(139 92 255 / 0.06));
+  border-color: rgb(6 111 239 / 0.45);
+  background: linear-gradient(120deg, rgb(6 111 239 / 0.14), rgb(23 0 244 / 0.06));
   box-shadow: 0 0 40px -12px var(--glow);
 }
 .dateBlock {
   display: grid; place-items: center; align-content: center; width: 68px; flex: none; padding: 8px 0; border-radius: 12px;
-  background: rgb(4 6 12 / 0.6); border: 1px solid var(--border-strong);
+  background: rgb(0 3 26 / 0.6); border: 1px solid var(--border-strong);
   font: 500 0.66rem var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
 }
 .dateBlock b { font: 600 1.9rem var(--font-sans), sans-serif; letter-spacing: -0.04em; color: var(--fg); line-height: 1.1; }
