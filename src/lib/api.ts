@@ -105,16 +105,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Exchanges credentials for a session token; null when they're wrong. */
-async function login(email: string, password: string) {
+type LoginResult =
+  | { ok: true; token: string; user: User }
+  | { ok: false; reason: "invalid" }
+  | { ok: false; reason: "locked"; retryAfterSeconds: number };
+
+/** Exchanges credentials for a session token. */
+async function login(email: string, password: string): Promise<LoginResult> {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  if (res.status === 401) return null;
+  if (res.status === 401) return { ok: false, reason: "invalid" };
+  if (res.status === 429) {
+    return { ok: false, reason: "locked", retryAfterSeconds: Number(res.headers.get("Retry-After")) || 900 };
+  }
   if (!res.ok) throw new ApiError(res.status, res.statusText);
-  return (await res.json()) as { token: string; user: User };
+  return { ok: true, ...((await res.json()) as { token: string; user: User }) };
 }
 
 export const api = {

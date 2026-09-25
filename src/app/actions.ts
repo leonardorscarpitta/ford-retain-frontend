@@ -17,7 +17,11 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   if (!email || !password) return { error: "Enter your email and password.", email };
 
   const session = await api.login(email, password);
-  if (!session) return { error: "That email and password don't match.", email };
+  if (!session.ok && session.reason === "locked") {
+    const minutes = Math.max(1, Math.ceil(session.retryAfterSeconds / 60));
+    return { error: `Too many attempts. Try again in ${minutes} minute${minutes > 1 ? "s" : ""}.`, email };
+  }
+  if (!session.ok) return { error: "That email and password don't match.", email };
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, session.token, {
