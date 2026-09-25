@@ -1,7 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { api, ApiError, DEMO_VIN } from "@/lib/api";
+import { cookies } from "next/headers";
+import { api, ApiError } from "@/lib/api";
+import { getGarage, VEHICLE_COOKIE } from "@/lib/garage";
+
+export async function selectVehicle(formData: FormData) {
+  const vin = String(formData.get("vin"));
+  const { vehicles } = await getGarage();
+  if (!vehicles.some((v) => v.vin === vin)) return;
+  (await cookies()).set(VEHICLE_COOKIE, vin, { httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
+  // Every page shows the selected vehicle, so refresh them all.
+  revalidatePath("/", "layout");
+}
 
 export async function markNotificationRead(formData: FormData) {
   await api.markNotificationRead(String(formData.get("id")));
@@ -9,7 +20,8 @@ export async function markNotificationRead(formData: FormData) {
 }
 
 export async function cancelAppointment(formData: FormData) {
-  await api.cancelAppointment(DEMO_VIN, String(formData.get("id")));
+  const { current } = await getGarage();
+  await api.cancelAppointment(current.vin, String(formData.get("id")));
   revalidatePath("/schedule");
   revalidatePath("/");
 }
@@ -24,7 +36,8 @@ export async function scheduleAppointment(
   if (!date) return { error: "Pick a date and time." };
 
   try {
-    await api.createAppointment(DEMO_VIN, {
+    const { current } = await getGarage();
+    await api.createAppointment(current.vin, {
       dealershipId: String(formData.get("dealershipId") ?? ""),
       // datetime-local has no timezone; treat it as the server's local time.
       scheduledAt: new Date(date).toISOString(),

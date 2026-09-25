@@ -23,7 +23,7 @@ const hint: Record<Zone, string> = {
 };
 
 /** Interactive 3D truck: click a part (or a zone chip) to open it and see its components. */
-export function VehicleExplorer({ components }: { components: VehicleComponent[] }) {
+export function VehicleExplorer({ components, paint }: { components: VehicleComponent[]; paint: string }) {
   const [selected, setSelected] = useState<Zone | null>(null);
   const reducedMotion = useReducedMotion();
 
@@ -39,7 +39,7 @@ export function VehicleExplorer({ components }: { components: VehicleComponent[]
   return (
     <div className={styles.explorer}>
       <div className={styles.stage}>
-        <TruckScene selected={selected} onSelect={setSelected} tones={tones} reducedMotion={reducedMotion} />
+        <TruckScene selected={selected} onSelect={setSelected} tones={tones} reducedMotion={reducedMotion} paint={paint} />
         <p className={styles.hint}>Drag to rotate · click a part to open it</p>
 
         {active && (

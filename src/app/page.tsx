@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { api, DEMO_VIN, type Notification } from "@/lib/api";
+import { api, type Notification } from "@/lib/api";
+import { getGarage } from "@/lib/garage";
 import {
   dateParts,
   healthScore,
@@ -8,7 +9,6 @@ import {
   relativeTime,
   TIME_ZONE,
   toneLabel,
-  toneOfScore,
   toneOfSeverity,
   toneOfStatus,
   zoneLabel,
@@ -24,18 +24,19 @@ import styles from "./dashboard.module.css";
 const FEED_SIZE = 5;
 
 export default async function DashboardPage() {
+  const { current: vehicle } = await getGarage();
   const [notifications, telemetry, upcoming, dealerships] = await Promise.all([
-    api.notifications(DEMO_VIN),
-    api.telemetry(DEMO_VIN),
-    api.appointments(DEMO_VIN, "upcoming"),
+    api.notifications(vehicle.vin),
+    api.telemetry(vehicle.vin),
+    api.appointments(vehicle.vin, "upcoming"),
     api.dealerships(),
   ]);
 
   const score = healthScore(telemetry.components);
-  const scoreTone = toneOfScore(score);
   const unread = notifications.filter((n) => !n.read);
   const critical = telemetry.components.filter((c) => c.status === "critical");
   const flagged = telemetry.components.filter((c) => c.status !== "good");
+  const flaggedTone = critical.length ? "critical" : flagged.length ? "warning" : "good";
   const next = upcoming[0];
   const nextDealership = dealerships.find((d) => d.id === next?.dealershipId);
   const feed = [...notifications].sort((a, b) => Number(a.read) - Number(b.read) || b.createdAt.localeCompare(a.createdAt));
@@ -47,7 +48,10 @@ export default async function DashboardPage() {
 
   return (
     <Page>
-      <PageHeader eyebrow={`VIN ${telemetry.vin} · synced ${relativeTime(telemetry.updatedAt)}`} title={telemetry.model} />
+      <PageHeader
+        eyebrow={`${vehicle.paintName} · VIN ${vehicle.vin} · synced ${relativeTime(telemetry.updatedAt)}`}
+        title={vehicle.model}
+      />
 
       <dl className={styles.stats}>
         <div>
@@ -56,8 +60,9 @@ export default async function DashboardPage() {
             {score}
             <small>/100</small>
           </dd>
-          <p className={styles.note} data-tone={scoreTone}>
-            <ToneIcon tone={scoreTone} size={14} /> {flagged.length} of {telemetry.components.length} systems need attention
+          <p className={styles.note} data-tone={flaggedTone}>
+            <ToneIcon tone={flaggedTone} size={14} />
+            {flagged.length ? `${flagged.length} of ${telemetry.components.length} systems need attention` : "All systems OK"}
           </p>
         </div>
         <div>
@@ -98,7 +103,7 @@ export default async function DashboardPage() {
       )}
 
       <section className={styles.section}>
-        <VehicleExplorer components={telemetry.components} />
+        <VehicleExplorer key={vehicle.vin} components={telemetry.components} paint={vehicle.paintHex} />
       </section>
 
       <div className={styles.columns}>

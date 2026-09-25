@@ -1,4 +1,5 @@
-import { api, DEMO_VIN, type Appointment, type Dealership } from "@/lib/api";
+import { api, type Appointment, type Dealership } from "@/lib/api";
+import { getGarage } from "@/lib/garage";
 import { dateParts, relativeTime } from "@/lib/format";
 import { Page, PageHeader } from "@/components/page";
 import { CancelButton } from "@/components/cancel-button";
@@ -7,11 +8,12 @@ import styles from "./schedule.module.css";
 
 export default async function SchedulePage({ searchParams }: PageProps<"/schedule">) {
   const { dealership, service } = await searchParams;
+  const { vin } = (await getGarage()).current;
   const [dealerships, upcoming, past, telemetry] = await Promise.all([
     api.dealerships(),
-    api.appointments(DEMO_VIN, "upcoming"),
-    api.appointments(DEMO_VIN, "past"),
-    api.telemetry(DEMO_VIN),
+    api.appointments(vin, "upcoming"),
+    api.appointments(vin, "past"),
+    api.telemetry(vin),
   ]);
   const byId = new Map(dealerships.map((d) => [d.id, d]));
   const suggestions = telemetry.components

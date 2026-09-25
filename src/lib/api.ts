@@ -5,8 +5,12 @@ import { connection } from "next/server";
 // pages fetch in Server Components and mutate through Server Actions.
 const API_URL = process.env.API_URL ?? "http://localhost:8080";
 
-// Until authentication exists, the app shows a single seeded vehicle.
-export const DEMO_VIN = process.env.DEMO_VIN ?? "1FTFW1E50NFA00001";
+export type Vehicle = {
+  vin: string;
+  model: string;
+  paintName: string;
+  paintHex: string;
+};
 
 export type Severity = "info" | "warning" | "critical";
 
@@ -33,7 +37,6 @@ export type VehicleComponent = {
 
 export type Telemetry = {
   vin: string;
-  model: string;
   mileageKm: number;
   battery: { healthPercent: number; estimatedMonthsLeft: number; history: number[] };
   components: VehicleComponent[];
@@ -84,6 +87,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  vehicles: () => request<Vehicle[]>("/api/vehicles"),
   notifications: (vin: string) => request<Notification[]>(`/api/vehicles/${vin}/notifications`),
   markNotificationRead: (id: string) =>
     request<Notification>(`/api/notifications/${id}/read`, { method: "PATCH" }),

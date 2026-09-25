@@ -7,15 +7,18 @@ import * as THREE from "three";
 import type { Zone } from "@/lib/api";
 import type { Tone } from "@/lib/format";
 
-// A stylised 2022 F-150 SuperCrew (Lariat PowerBoost, Rapid Red), built from
-// primitives and extruded side profiles. Units are roughly metres: the truck
-// points down +x, +z is its right-hand side, y is up.
+// A stylised Ford pickup (modelled on a 2022 F-150 SuperCrew), built from
+// primitives and extruded side profiles and painted in the selected vehicle's
+// colour. Units are roughly metres: the truck points down +x, +z is its
+// right-hand side, y is up.
 
 export type TruckSceneProps = {
   selected: Zone | null;
   onSelect: (zone: Zone | null) => void;
   tones: Partial<Record<Zone, Tone>>;
   reducedMotion: boolean;
+  /** Body colour as a hex string. */
+  paint: string;
 };
 
 const TONE_HEX: Record<Tone, string> = {
@@ -25,7 +28,6 @@ const TONE_HEX: Record<Tone, string> = {
   info: "#066fef",
 };
 
-const PAINT = "#b0121f"; // Rapid Red metallic
 const FORD_BLUE = "#00095b";
 const ACCENT = "#066fef";
 const LED = "#eaf4ff";
@@ -201,9 +203,10 @@ function Hinge({
 /* ------------------------------------------------------------------ */
 
 function Paint({ lit }: { lit?: boolean }) {
+  const { paint } = useScene();
   return (
     <meshPhysicalMaterial
-      color={PAINT}
+      color={paint}
       metalness={0.55}
       roughness={0.26}
       clearcoat={1}
