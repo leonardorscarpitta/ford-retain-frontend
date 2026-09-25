@@ -2,15 +2,25 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { api, type Dealership } from "@/lib/api";
 import { ArrowIcon, CalendarIcon, ClockIcon, PinIcon, StarIcon } from "@/components/icons";
+import { LocateButton } from "@/components/locate-button";
 import { Page, PageHeader } from "@/components/page";
 import styles from "./dealerships.module.css";
 
 // Default search point (São Paulo) until we ask the browser for a location.
 const DEFAULT_POINT = { lat: -23.5505, lng: -46.6333 };
 
+function parsePoint(lat: unknown, lng: unknown) {
+  const la = Number(lat);
+  const ln = Number(lng);
+  if (typeof lat !== "string" || typeof lng !== "string" || !Number.isFinite(la) || !Number.isFinite(ln)) return undefined;
+  if (Math.abs(la) > 90 || Math.abs(ln) > 180) return undefined;
+  return { lat: la, lng: ln };
+}
+
 export default async function DealershipsPage({ searchParams }: PageProps<"/dealerships">) {
-  const { id, service } = await searchParams;
-  const all = await api.dealerships(DEFAULT_POINT);
+  const { id, service, lat, lng } = await searchParams;
+  const userPoint = parsePoint(lat, lng);
+  const all = await api.dealerships(userPoint ?? DEFAULT_POINT);
   const services = [...new Set(all.flatMap((d) => d.services))].sort();
   const filter = typeof service === "string" && services.includes(service) ? service : undefined;
   const dealerships = filter ? all.filter((d) => d.services.includes(filter)) : all;
@@ -21,6 +31,10 @@ export default async function DealershipsPage({ searchParams }: PageProps<"/deal
     const q = new URLSearchParams();
     if (params.service) q.set("service", params.service);
     if (params.id) q.set("id", params.id);
+    if (userPoint) {
+      q.set("lat", String(userPoint.lat));
+      q.set("lng", String(userPoint.lng));
+    }
     const s = q.toString();
     return `/dealerships${s ? `?${s}` : ""}`;
   };
@@ -32,11 +46,12 @@ export default async function DealershipsPage({ searchParams }: PageProps<"/deal
           <b className={styles.stat}>{all.length}</b> locations
         </span>
         <span>
-          <b className={styles.stat}>{all[0]?.distanceKm} km</b> to the nearest
+          <b className={styles.stat}>{all[0]?.distanceKm} km</b> to the nearest {userPoint ? "(from you)" : "(from central São Paulo)"}
         </span>
         <span>
           <b className={styles.stat}>★ {avgRating.toFixed(1)}</b> average rating
         </span>
+        <LocateButton active={Boolean(userPoint)} />
       </PageHeader>
 
       <nav className={`rise ${styles.filters}`} aria-label="Filter by service">

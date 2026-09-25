@@ -8,6 +8,12 @@ export async function markNotificationRead(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function cancelAppointment(formData: FormData) {
+  await api.cancelAppointment(DEMO_VIN, String(formData.get("id")));
+  revalidatePath("/schedule");
+  revalidatePath("/");
+}
+
 export type ScheduleState = { error?: string; ok?: boolean };
 
 export async function scheduleAppointment(

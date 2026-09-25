@@ -79,6 +79,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.error ?? res.statusText);
   }
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -99,4 +100,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+  cancelAppointment: (vin: string, id: string) =>
+    request<void>(`/api/vehicles/${vin}/appointments/${id}`, { method: "DELETE" }),
 };

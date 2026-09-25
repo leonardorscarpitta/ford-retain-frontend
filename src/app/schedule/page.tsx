@@ -3,6 +3,7 @@ import { api, DEMO_VIN, type Appointment, type Dealership } from "@/lib/api";
 import { dateParts, relativeTime } from "@/lib/format";
 import { CalendarIcon, ClockIcon, PinIcon, WrenchIcon } from "@/components/icons";
 import { Page, PageHeader } from "@/components/page";
+import { CancelButton } from "@/components/cancel-button";
 import { ScheduleForm } from "@/components/schedule-form";
 import styles from "./schedule.module.css";
 
@@ -126,6 +127,9 @@ function UpcomingCard({ a, dealership, i }: { a: Appointment; dealership?: Deale
           <ClockIcon size={13} /> {d.time} · <span className={styles.countdown}>{relativeTime(a.scheduledAt)}</span>
         </span>
         {a.notes && <em className={styles.notes}>{a.notes}</em>}
+      </div>
+      <div className={styles.cardActions}>
+        <CancelButton id={a.id} />
       </div>
     </li>
   );

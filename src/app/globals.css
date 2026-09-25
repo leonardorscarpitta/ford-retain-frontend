@@ -258,6 +258,10 @@ h1, h2, h3, p { margin: 0; }
 }
 .btn-ghost:hover { background: rgb(6 111 239 / 0.12); border-color: var(--accent); box-shadow: 0 0 24px -6px var(--glow); }
 .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn-danger { background: var(--critical); box-shadow: 0 8px 24px -8px var(--critical); }
+.locate { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.locate small { color: var(--warning); }
+.cancel-form { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 
 .field { display: grid; gap: 8px; }
 .field > span { font: 500 0.72rem var(--font-mono), monospace; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }

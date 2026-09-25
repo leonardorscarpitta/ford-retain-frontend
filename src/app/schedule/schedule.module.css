@@ -25,6 +25,7 @@
 .cardBody strong { font-size: 1.02rem; font-weight: 600; }
 .cardBody span { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
 .countdown { color: var(--accent-3); }
+.cardActions { margin-left: auto; align-self: center; }
 .notes { font-size: 0.82rem; color: var(--muted); font-style: normal; border-left: 2px solid var(--accent-2); padding-left: 8px; margin-top: 4px; }
 
 .year + .year { margin-top: 18px; }
