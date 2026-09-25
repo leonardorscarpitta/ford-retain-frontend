@@ -1,0 +1,5 @@
+.wrap { max-width: 360px; margin: 8vh auto 0; display: grid; gap: 16px; }
+.wrap h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; }
+.notice { padding: 10px 12px; border-radius: var(--radius); background: var(--surface); font-size: 0.9rem; }
+.demo { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+.demo code { font-size: 0.8rem; color: var(--fg); }

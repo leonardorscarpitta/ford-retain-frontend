@@ -2,12 +2,10 @@ import "server-only";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { api } from "./api";
-
-/** Cookie holding the VIN the owner is currently looking at. */
-export const VEHICLE_COOKIE = "vin";
+import { VEHICLE_COOKIE } from "./cookies";
 
 /**
- * The owner's vehicles and the one currently selected (from the cookie,
+ * The signed-in owner's vehicles and the one currently selected (from the cookie,
  * falling back to the first). Cached per request, so pages, the layout and
  * actions can all call it freely.
  */

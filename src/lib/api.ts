@@ -1,9 +1,18 @@
 import "server-only";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { SESSION_COOKIE } from "./cookies";
 
 // Server-side client for the Go API. The browser never calls the API directly:
 // pages fetch in Server Components and mutate through Server Actions.
 const API_URL = process.env.API_URL ?? "http://localhost:8080";
+
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+};
 
 export type Vehicle = {
   vin: string;
@@ -72,12 +81,22 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Calls the API as the signed-in user (the session cookie becomes a bearer
+ * token). A 401 means the session is gone: send the user to sign in again.
+ */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   await connection(); // always render with fresh data at request time
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
+  if (res.status === 401) redirect("/auth/expired");
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.error ?? res.statusText);
@@ -86,11 +105,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Exchanges credentials for a session token; null when they're wrong. */
+async function login(email: string, password: string) {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) throw new ApiError(res.status, res.statusText);
+  return (await res.json()) as { token: string; user: User };
+}
+
 export const api = {
+  login,
+  me: () => request<User>("/api/auth/me"),
+  logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   vehicles: () => request<Vehicle[]>("/api/vehicles"),
   notifications: (vin: string) => request<Notification[]>(`/api/vehicles/${vin}/notifications`),
-  markNotificationRead: (id: string) =>
-    request<Notification>(`/api/notifications/${id}/read`, { method: "PATCH" }),
+  markNotificationRead: (vin: string, id: string) =>
+    request<Notification>(`/api/vehicles/${vin}/notifications/${id}/read`, { method: "PATCH" }),
   telemetry: (vin: string) => request<Telemetry>(`/api/vehicles/${vin}/telemetry`),
   dealerships: (near?: { lat: number; lng: number }) =>
     request<Dealership[]>(`/api/dealerships${near ? `?lat=${near.lat}&lng=${near.lng}` : ""}`),

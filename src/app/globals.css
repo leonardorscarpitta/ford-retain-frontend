@@ -73,7 +73,9 @@ h1, h2, h3, p { margin: 0; }
 .nav-link:hover { color: var(--fg); }
 .nav-link[aria-current="page"] { color: var(--fg); border-bottom-color: var(--ford-blue); }
 
-.switcher { display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
+.account { display: flex; align-items: center; gap: 16px; margin-left: auto; min-width: 0; }
+.account .user { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+.switcher { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .switcher select {
   min-width: 0; max-width: 280px; padding: 6px 28px 6px 10px; border-radius: var(--radius);
   font: inherit; font-size: 0.85rem; color: var(--fg); cursor: pointer;
@@ -87,6 +89,7 @@ h1, h2, h3, p { margin: 0; }
 @media (max-width: 560px) {
   .topbar { gap: 16px; }
   .switcher select { max-width: 120px; }
+  .account .user { display: none; }
   .brand span:last-child { display: none; }
   .nav { gap: 16px; }
 }
