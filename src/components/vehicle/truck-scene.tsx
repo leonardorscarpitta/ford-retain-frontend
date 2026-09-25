@@ -20,7 +20,7 @@ export type TruckSceneProps = {
 
 const TONE_HEX: Record<Tone, string> = {
   good: "#0ca30c",
-  warning: "#fab219",
+  warning: "#d98e04",
   critical: "#d03b3b",
   info: "#066fef",
 };
@@ -73,8 +73,7 @@ export default function TruckScene(props: TruckSceneProps) {
         <Lights />
         <Truck />
         <Hotspots />
-        <GroundRing />
-        <ContactShadows position={[0, 0.001, 0]} opacity={0.7} scale={13} blur={2.2} far={3} color="#000314" />
+        <ContactShadows position={[0, 0.001, 0]} opacity={0.35} scale={13} blur={2.6} far={3} color="#101828" />
         <CameraRig />
       </SceneContext>
     </Canvas>
@@ -88,37 +87,17 @@ export default function TruckScene(props: TruckSceneProps) {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.6} />
       <directionalLight position={[5, 8, 4]} intensity={1.8} />
-      <directionalLight position={[-6, 3, -4]} intensity={0.7} color="#6caaff" />
+      <directionalLight position={[-6, 3, -4]} intensity={0.7} />
       <Environment resolution={256}>
         <Lightformer form="rect" intensity={3} position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[12, 4, 1]} />
         <Lightformer form="rect" intensity={2.5} position={[0, 2, 7]} scale={[10, 0.5, 1]} />
         <Lightformer form="rect" intensity={2} position={[0, 2, -7]} rotation-y={Math.PI} scale={[10, 0.5, 1]} />
         <Lightformer form="rect" intensity={2} position={[8, 2, 0]} rotation-y={-Math.PI / 2} scale={[6, 1, 1]} />
-        <Lightformer form="rect" intensity={4} color={ACCENT} position={[-8, 1.5, 0]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} />
+        <Lightformer form="rect" intensity={2} position={[-8, 1.5, 0]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} />
       </Environment>
     </>
-  );
-}
-
-function GroundRing() {
-  const ref = useRef<THREE.Mesh>(null);
-  const { reducedMotion } = useScene();
-  useFrame((_, dt) => {
-    if (ref.current && !reducedMotion) ref.current.rotation.z += dt * 0.15;
-  });
-  return (
-    <group rotation-x={-Math.PI / 2} position={[0, 0.002, 0]}>
-      <mesh ref={ref}>
-        <ringGeometry args={[3.65, 3.7, 96, 1, 0, Math.PI * 1.6]} />
-        <meshBasicMaterial color={ACCENT} transparent opacity={0.55} toneMapped={false} />
-      </mesh>
-      <mesh>
-        <ringGeometry args={[3.9, 3.91, 96]} />
-        <meshBasicMaterial color="#6caaff" transparent opacity={0.25} toneMapped={false} />
-      </mesh>
-    </group>
   );
 }
 

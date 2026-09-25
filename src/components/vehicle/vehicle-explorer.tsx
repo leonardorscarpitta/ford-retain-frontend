@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import type { VehicleComponent, Zone } from "@/lib/api";
 import { toneLabel, toneOfStatus, worstStatus, zoneLabel, zoneOrder, type Tone } from "@/lib/format";
-import { ArrowIcon, ToneIcon, WrenchIcon } from "../icons";
+import { ToneIcon } from "../icons";
 import styles from "./vehicle-explorer.module.css";
 
 // three.js needs the browser; load the scene on the client only.
@@ -73,7 +73,7 @@ export function VehicleExplorer({ components }: { components: VehicleComponent[]
             </ul>
             {active.items.some((c) => c.status !== "good") && (
               <Link href={`/schedule?service=${encodeURIComponent(`${zoneLabel[active.zone]} service`)}`} className="btn btn-sm">
-                <WrenchIcon size={14} /> Book a fix <ArrowIcon size={14} />
+                Book a fix
               </Link>
             )}
           </aside>

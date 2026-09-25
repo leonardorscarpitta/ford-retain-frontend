@@ -27,7 +27,7 @@ export function Sparkline({
       aria-label={`Trend from ${values[0]}${unit} to ${values[last]}${unit}`}>
       <defs>
         <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="var(--accent)" stopOpacity="0.35" />
+          <stop offset="0" stopColor="var(--accent)" stopOpacity="0.1" />
           <stop offset="1" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
       </defs>

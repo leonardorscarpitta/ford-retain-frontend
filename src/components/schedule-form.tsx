@@ -3,7 +3,7 @@
 import { useActionState, useRef } from "react";
 import { scheduleAppointment, type ScheduleState } from "@/app/actions";
 import type { Dealership } from "@/lib/api";
-import { ArrowIcon, CheckIcon, CriticalIcon, ToneIcon } from "./icons";
+import { CheckIcon, CriticalIcon, ToneIcon } from "./icons";
 
 type Suggestion = { label: string; tone: "critical" | "warning" };
 
@@ -86,7 +86,7 @@ export function ScheduleForm({
           </>
         ) : (
           <>
-            Confirm booking <ArrowIcon size={16} />
+            Confirm booking
           </>
         )}
       </button>

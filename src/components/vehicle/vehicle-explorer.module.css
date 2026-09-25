@@ -1,47 +1,39 @@
 .explorer { display: grid; gap: 12px; }
 
 .stage {
-  position: relative; height: clamp(320px, 42vw, 460px); border-radius: 16px; overflow: hidden;
-  background:
-    radial-gradient(ellipse 60% 55% at 50% 60%, rgb(6 111 239 / 0.16), transparent 70%),
-    linear-gradient(180deg, transparent, rgb(0 9 91 / 0.35));
-  border: 1px solid var(--border);
+  position: relative; height: clamp(320px, 40vw, 440px); overflow: hidden;
+  background: var(--surface); border-radius: var(--radius);
 }
 .stage canvas { touch-action: pan-y; }
-.loading { position: absolute; inset: 0; border-radius: 0; border: 0; }
+.loading { position: absolute; inset: 0; }
 
-.hint {
-  position: absolute; left: 14px; bottom: 12px; pointer-events: none;
-  font: 500 0.68rem var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
-}
+.hint { position: absolute; left: 16px; bottom: 12px; pointer-events: none; font-size: 0.8rem; color: var(--muted); }
 
 .detail {
-  position: absolute; top: 12px; right: 12px; bottom: 12px; width: min(320px, calc(100% - 24px));
-  display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto;
-  border-radius: 14px; background: rgb(0 8 40 / 0.82); backdrop-filter: blur(14px);
-  border: 1px solid color-mix(in oklab, var(--tone) 45%, transparent);
-  box-shadow: 0 0 40px -10px var(--tone);
-  animation: slide-in 0.45s var(--ease-out) both;
+  position: absolute; top: 12px; right: 12px; bottom: 12px; width: min(300px, calc(100% - 24px));
+  display: flex; flex-direction: column; gap: 14px; padding: 18px; overflow-y: auto;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
 }
-@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } }
 .detail header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.detail header .eyebrow { margin-bottom: 4px; }
-.detail h3 { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.03em; }
+.detail header .eyebrow { margin-bottom: 2px; }
+.detail h3 { font-size: 1.05rem; font-weight: 600; }
 .close {
-  width: 30px; height: 30px; flex: none; border-radius: 50%; cursor: pointer; font-size: 1.1rem; line-height: 1;
-  color: var(--fg); background: rgb(255 255 255 / 0.06); border: 1px solid var(--border-strong);
+  width: 28px; height: 28px; flex: none; border-radius: 50%; cursor: pointer; font-size: 1rem; line-height: 1;
+  color: var(--muted); background: none; border: 1px solid var(--border);
 }
-.close:hover { background: rgb(6 111 239 / 0.25); }
-.detail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.detail li { display: grid; grid-template-columns: 16px 1fr 56px 38px; align-items: center; gap: 8px; font-size: 0.86rem; }
+.close:hover { color: var(--fg); background: var(--surface); }
+.detail ul { list-style: none; margin: 0; padding: 0; }
+.detail li {
+  display: grid; grid-template-columns: 14px 1fr 56px 36px; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+}
 .icon { color: var(--tone); }
-.name { display: grid; line-height: 1.2; }
-.name small { font-size: 0.7rem; color: var(--muted); }
-.value { font-family: var(--font-mono), monospace; font-size: 0.78rem; text-align: right; }
+.name { display: grid; line-height: 1.25; }
+.name small { font-size: 0.75rem; color: var(--muted); }
+.value { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 .detail :global(.btn) { margin-top: auto; align-self: flex-start; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.chips button[aria-pressed="true"] { background: color-mix(in oklab, var(--tone) 28%, transparent); box-shadow: 0 0 18px -4px var(--tone); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 @media (max-width: 640px) {
   .detail { top: auto; left: 12px; width: auto; max-height: 60%; }

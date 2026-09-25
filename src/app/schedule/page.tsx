@@ -1,7 +1,5 @@
-import type { CSSProperties } from "react";
 import { api, DEMO_VIN, type Appointment, type Dealership } from "@/lib/api";
 import { dateParts, relativeTime } from "@/lib/format";
-import { CalendarIcon, ClockIcon, PinIcon, WrenchIcon } from "@/components/icons";
 import { Page, PageHeader } from "@/components/page";
 import { CancelButton } from "@/components/cancel-button";
 import { ScheduleForm } from "@/components/schedule-form";
@@ -30,17 +28,11 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
 
   return (
     <Page>
-      <PageHeader eyebrow="Maintenance" title="Book your next service">
-        <span>
-          {upcoming.length} upcoming · {past.length} completed visits
-        </span>
-      </PageHeader>
+      <PageHeader eyebrow="Maintenance" title="Schedule a service" />
 
       <div className={styles.layout}>
-        <section className={`panel rise ${styles.formPanel}`}>
-          <p className="panel-title">
-            <WrenchIcon size={16} /> New appointment
-          </p>
+        <section className={`panel ${styles.formPanel}`}>
+          <h2 className="section-title">New appointment</h2>
           <ScheduleForm
             dealerships={dealerships}
             suggestions={suggestions}
@@ -49,56 +41,51 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           />
         </section>
 
-        <div className={styles.side}>
-          <section className="panel rise" style={{ "--i": 1 } as CSSProperties}>
-            <p className="panel-title">
-              <CalendarIcon size={16} /> <span className="grow">Upcoming</span>
-              <span>{upcoming.length}</span>
-            </p>
+        <div>
+          <section className={styles.section}>
+            <h2 className="section-title">
+              Upcoming <span className="muted">{upcoming.length}</span>
+            </h2>
             {upcoming.length === 0 ? (
-              <div className="empty">
-                <CalendarIcon size={28} />
-                No upcoming appointments.
-              </div>
+              <p className="empty">No upcoming appointments.</p>
             ) : (
-              <ul className={styles.upcoming}>
-                {upcoming.map((a, i) => (
-                  <UpcomingCard key={a.id} a={a} dealership={byId.get(a.dealershipId)} i={i} />
+              <ul className={styles.list}>
+                {upcoming.map((a) => (
+                  <Upcoming key={a.id} a={a} dealership={byId.get(a.dealershipId)} />
                 ))}
               </ul>
             )}
           </section>
 
-          <section className="panel rise" style={{ "--i": 2 } as CSSProperties}>
-            <p className="panel-title">
-              <ClockIcon size={16} /> <span className="grow">Service history</span>
-              <span>{past.length}</span>
-            </p>
+          <section className={styles.section}>
+            <h2 className="section-title">
+              History <span className="muted">{past.length}</span>
+            </h2>
             {past.length === 0 ? (
-              <div className="empty">No past appointments.</div>
+              <p className="empty">No past appointments.</p>
             ) : (
               [...years].map(([year, items]) => (
                 <div key={year} className={styles.year}>
-                  <h3 className={styles.yearLabel}>{year}</h3>
-                  <ol className={styles.history}>
+                  <h3>{year}</h3>
+                  <ul className={styles.list}>
                     {items.map((a) => {
                       const d = dateParts(a.scheduledAt);
                       return (
-                        <li key={a.id}>
-                          <time dateTime={a.scheduledAt} className="mono">
+                        <li key={a.id} className={styles.row}>
+                          <time dateTime={a.scheduledAt} className={styles.date}>
                             {d.day} {d.month}
                           </time>
                           <div>
-                            <strong>{a.service}</strong>
-                            <span className="muted">
+                            <p>{a.service}</p>
+                            <p className="muted">
                               {byId.get(a.dealershipId)?.name}
                               {a.notes && ` · ${a.notes}`}
-                            </span>
+                            </p>
                           </div>
                         </li>
                       );
                     })}
-                  </ol>
+                  </ul>
                 </div>
               ))
             )}
@@ -109,28 +96,23 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
   );
 }
 
-function UpcomingCard({ a, dealership, i }: { a: Appointment; dealership?: Dealership; i: number }) {
+function Upcoming({ a, dealership }: { a: Appointment; dealership?: Dealership }) {
   const d = dateParts(a.scheduledAt);
   return (
-    <li className={`rise ${styles.card}`} style={{ "--i": i + 2 } as CSSProperties} data-first={i === 0 || undefined}>
-      <div className={styles.dateBlock}>
-        <span>{d.month}</span>
-        <b>{d.day}</b>
-        <span>{d.weekday}</span>
+    <li className={styles.row}>
+      <time dateTime={a.scheduledAt} className={styles.date}>
+        {d.day} {d.month}
+      </time>
+      <div>
+        <p>
+          <strong>{a.service}</strong>
+        </p>
+        <p className="muted">
+          {dealership?.name ?? a.dealershipId} · {d.weekday} {d.time} · {relativeTime(a.scheduledAt)}
+        </p>
+        {a.notes && <p className="muted">{a.notes}</p>}
       </div>
-      <div className={styles.cardBody}>
-        <strong>{a.service}</strong>
-        <span className="muted">
-          <PinIcon size={13} /> {dealership?.name ?? a.dealershipId}
-        </span>
-        <span className="muted">
-          <ClockIcon size={13} /> {d.time} · <span className={styles.countdown}>{relativeTime(a.scheduledAt)}</span>
-        </span>
-        {a.notes && <em className={styles.notes}>{a.notes}</em>}
-      </div>
-      <div className={styles.cardActions}>
-        <CancelButton id={a.id} />
-      </div>
+      <CancelButton id={a.id} />
     </li>
   );
 }
