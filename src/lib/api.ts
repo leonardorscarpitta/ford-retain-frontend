@@ -75,6 +75,12 @@ export type Appointment = {
   createdAt: string;
 };
 
+export type Availability = {
+  dealershipId: string;
+  timeZone: string;
+  days: { date: string; slots: { start: string; available: boolean }[] }[];
+};
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -136,6 +142,8 @@ export const api = {
   telemetry: (vin: string) => request<Telemetry>(`/api/vehicles/${vin}/telemetry`),
   dealerships: (near?: { lat: number; lng: number }) =>
     request<Dealership[]>(`/api/dealerships${near ? `?lat=${near.lat}&lng=${near.lng}` : ""}`),
+  availability: (dealershipId: string, days = 14) =>
+    request<Availability>(`/api/dealerships/${dealershipId}/availability?days=${days}`),
   appointments: (vin: string, when?: "upcoming" | "past") =>
     request<Appointment[]>(`/api/vehicles/${vin}/appointments${when ? `?when=${when}` : ""}`),
   createAppointment: (

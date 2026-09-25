@@ -1,35 +1,43 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useActionState, useRef, useTransition } from "react";
 import { scheduleAppointment, type ScheduleState } from "@/app/actions";
-import type { Dealership } from "@/lib/api";
+import type { Availability, Dealership } from "@/lib/api";
 import { CheckIcon, CriticalIcon, ToneIcon } from "./icons";
+import { SlotPicker } from "./slot-picker";
 
 type Suggestion = { label: string; tone: "critical" | "warning" };
 
 export function ScheduleForm({
   dealerships,
   suggestions,
-  defaultDealership,
+  dealershipId,
+  availability,
   defaultService,
 }: {
   dealerships: Dealership[];
   suggestions: Suggestion[];
-  defaultDealership?: string;
+  dealershipId: string;
+  availability: Availability;
   defaultService?: string;
 }) {
   const [state, formAction, pending] = useActionState<ScheduleState, FormData>(scheduleAppointment, {});
   const serviceRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const [loadingSlots, startLoading] = useTransition();
 
-  // datetime-local has no zone: convert in the browser, where the owner's zone is known.
-  const submit = (formData: FormData) => {
-    const local = formData.get("scheduledAt");
-    if (local) formData.set("scheduledAt", new Date(String(local)).toISOString());
-    formAction(formData);
+  // Availability is rendered on the server for the dealership in the URL.
+  const chooseDealership = (id: string) => {
+    const q = new URLSearchParams(params);
+    q.set("dealership", id);
+    startLoading(() => router.replace(`${pathname}?${q}`, { scroll: false }));
   };
 
   return (
-    <form action={submit} className="schedule-form">
+    <form action={formAction} className="schedule-form">
       <label className="field">
         <span>Service</span>
         <input ref={serviceRef} name="service" className="input" required defaultValue={defaultService} placeholder="e.g. Brake pad replacement" />
@@ -60,7 +68,17 @@ export function ScheduleForm({
 
       <label className="field">
         <span>Dealership</span>
-        <select name="dealershipId" className="input" required defaultValue={defaultDealership}>
+        {/* Keyed so its default follows the URL: React resets the form after a
+            booking, which would otherwise snap back to the first-rendered dealership
+            while the slots shown belong to the new one. */}
+        <select
+          key={dealershipId}
+          name="dealershipId"
+          className="input"
+          required
+          defaultValue={dealershipId}
+          onChange={(e) => chooseDealership(e.target.value)}
+        >
           {dealerships.map((d) => (
             <option key={d.id} value={d.id}>
               {d.name} — ★ {d.rating.toFixed(1)}
@@ -69,10 +87,10 @@ export function ScheduleForm({
         </select>
       </label>
 
-      <label className="field">
-        <span>Date &amp; time</span>
-        <input type="datetime-local" name="scheduledAt" className="input" required />
-      </label>
+      <div aria-busy={loadingSlots} style={{ opacity: loadingSlots ? 0.5 : 1 }}>
+        {/* Keyed so the chosen day resets when the dealership changes. */}
+        <SlotPicker key={availability.dealershipId} availability={availability} />
+      </div>
 
       <label className="field">
         <span>Notes for the technician</span>

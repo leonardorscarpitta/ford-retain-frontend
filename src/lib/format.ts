@@ -97,7 +97,7 @@ export function dateParts(iso: string) {
     month: fmt({ month: "short" }),
     year: fmt({ year: "numeric" }),
     weekday: fmt({ weekday: "short" }),
-    time: fmt({ hour: "2-digit", minute: "2-digit" }),
+    time: fmt({ hour: "2-digit", minute: "2-digit", hour12: false }),
   };
 }
 

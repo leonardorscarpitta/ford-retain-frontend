@@ -80,20 +80,22 @@ export async function scheduleAppointment(
   _prev: ScheduleState,
   formData: FormData,
 ): Promise<ScheduleState> {
-  const date = String(formData.get("scheduledAt") ?? "");
-  if (!date) return { error: "Pick a date and time." };
+  const slot = String(formData.get("scheduledAt") ?? "");
+  if (!slot) return { error: "Pick a time." };
 
   try {
     const { current } = await getGarage();
     await api.createAppointment(current.vin, {
       dealershipId: String(formData.get("dealershipId") ?? ""),
-      // datetime-local has no timezone; treat it as the server's local time.
-      scheduledAt: new Date(date).toISOString(),
+      scheduledAt: slot, // a slot start from the API, with its UTC offset
       service: String(formData.get("service") ?? ""),
       notes: String(formData.get("notes") ?? ""),
     });
   } catch (err) {
-    if (err instanceof ApiError && err.status < 500) return { error: err.message };
+    if (err instanceof ApiError && err.status < 500) {
+      const message = err.message.replace(/^invalid appointment: /, "");
+      return { error: message.charAt(0).toUpperCase() + message.slice(1) + "." };
+    }
     throw err;
   }
   revalidatePath("/schedule");

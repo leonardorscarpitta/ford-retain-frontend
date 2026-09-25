@@ -9,8 +9,10 @@ import styles from "./schedule.module.css";
 export default async function SchedulePage({ searchParams }: PageProps<"/schedule">) {
   const { dealership, service } = await searchParams;
   const { vin } = (await getGarage()).current;
-  const [dealerships, upcoming, past, telemetry] = await Promise.all([
-    api.dealerships(),
+  const dealerships = await api.dealerships();
+  const dealershipId = typeof dealership === "string" && dealerships.some((d) => d.id === dealership) ? dealership : dealerships[0].id;
+  const [availability, upcoming, past, telemetry] = await Promise.all([
+    api.availability(dealershipId),
     api.appointments(vin, "upcoming"),
     api.appointments(vin, "past"),
     api.telemetry(vin),
@@ -38,7 +40,8 @@ export default async function SchedulePage({ searchParams }: PageProps<"/schedul
           <ScheduleForm
             dealerships={dealerships}
             suggestions={suggestions}
-            defaultDealership={typeof dealership === "string" ? dealership : undefined}
+            dealershipId={dealershipId}
+            availability={availability}
             defaultService={typeof service === "string" ? service : undefined}
           />
         </section>
