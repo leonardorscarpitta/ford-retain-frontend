@@ -1,0 +1,52 @@
+.layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px; align-items: start; }
+.formPanel { position: sticky; top: 96px; }
+.side { display: grid; gap: 18px; }
+
+.upcoming { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.card {
+  display: flex; gap: 16px; padding: 14px; border-radius: 16px;
+  background: rgb(255 255 255 / 0.025); border: 1px solid var(--border);
+  transition: transform 0.35s var(--ease-spring), border-color 0.3s, background 0.3s;
+}
+.card:hover { transform: translateX(4px); border-color: var(--border-strong); background: rgb(61 139 255 / 0.06); }
+.card[data-first] {
+  border-color: rgb(61 139 255 / 0.45);
+  background: linear-gradient(120deg, rgb(61 139 255 / 0.14), rgb(139 92 255 / 0.06));
+  box-shadow: 0 0 40px -12px var(--glow);
+}
+.dateBlock {
+  display: grid; place-items: center; align-content: center; width: 68px; flex: none; padding: 8px 0; border-radius: 12px;
+  background: rgb(4 6 12 / 0.6); border: 1px solid var(--border-strong);
+  font: 500 0.66rem var(--font-mono), monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
+.dateBlock b { font: 600 1.9rem var(--font-sans), sans-serif; letter-spacing: -0.04em; color: var(--fg); line-height: 1.1; }
+.card[data-first] .dateBlock b { background: linear-gradient(180deg, #fff, var(--accent-3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cardBody { display: grid; gap: 4px; align-content: center; min-width: 0; }
+.cardBody strong { font-size: 1.02rem; font-weight: 600; }
+.cardBody span { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+.countdown { color: var(--accent-3); }
+.notes { font-size: 0.82rem; color: var(--muted); font-style: normal; border-left: 2px solid var(--accent-2); padding-left: 8px; margin-top: 4px; }
+
+.year + .year { margin-top: 18px; }
+.yearLabel {
+  font: 600 0.8rem var(--font-mono), monospace; letter-spacing: 0.2em; color: var(--accent);
+  display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
+}
+.yearLabel::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-strong), transparent); }
+.history { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 1px solid var(--border-strong); }
+.history li { position: relative; display: grid; grid-template-columns: 70px 1fr; gap: 12px; padding: 10px 0 10px 14px; }
+.history li::before {
+  content: ""; position: absolute; left: -19px; top: 15px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--panel-solid); border: 2px solid var(--accent);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.history li:hover::before { background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+.history time { font-size: 0.78rem; color: var(--muted); padding-top: 2px; }
+.history div { display: grid; gap: 2px; }
+.history strong { font-weight: 500; }
+.history .muted { font-size: 0.82rem; }
+
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; }
+  .formPanel { position: static; }
+}

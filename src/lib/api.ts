@@ -21,11 +21,22 @@ export type Notification = {
   createdAt: string;
 };
 
+export type ComponentStatus = "good" | "attention" | "critical";
+export type Zone = "engine-bay" | "front-wheel" | "rear-wheel" | "underbody" | "cabin";
+
+export type VehicleComponent = {
+  name: string;
+  zone: Zone;
+  health: number;
+  status: ComponentStatus;
+};
+
 export type Telemetry = {
   vin: string;
+  model: string;
   mileageKm: number;
-  battery: { healthPercent: number; estimatedMonthsLeft: number };
-  components: { name: string; health: number; status: "good" | "attention" | "critical" }[];
+  battery: { healthPercent: number; estimatedMonthsLeft: number; history: number[] };
+  components: VehicleComponent[];
   updatedAt: string;
 };
 
@@ -36,6 +47,9 @@ export type Dealership = {
   phone: string;
   lat: number;
   lng: number;
+  rating: number;
+  hours: string;
+  services: string[];
   distanceKm?: number;
 };
 
