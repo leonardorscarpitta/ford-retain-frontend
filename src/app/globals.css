@@ -180,6 +180,14 @@ textarea.input { resize: vertical; min-height: 72px; }
 .sparkline-hit circle { fill: var(--accent); opacity: 0; }
 .sparkline-hit:hover circle { opacity: 1; }
 
+/* ---------- Map markers (Leaflet divIcons live outside CSS modules) ---------- */
+
+.map-pin, .map-you { display: block; border-radius: 50%; box-shadow: 0 1px 3px rgb(0 0 0 / 0.35); }
+.map-pin { width: 14px; height: 14px; margin: 2px; background: var(--ford-blue); border: 2px solid #fff; transition: transform 0.15s; }
+.map-pin:hover { transform: scale(1.25); }
+.map-pin-active { width: 18px; height: 18px; margin: 0; background: var(--link); box-shadow: 0 0 0 4px rgb(6 111 239 / 0.25); }
+.map-you { width: 16px; height: 16px; background: #fff; border: 5px solid var(--good); }
+
 /* ---------- States ---------- */
 
 .empty { padding: 24px 0; color: var(--muted); font-size: 0.9rem; }

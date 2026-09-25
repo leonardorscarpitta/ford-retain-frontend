@@ -20,7 +20,6 @@
 .row > .muted { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .details { position: sticky; top: 92px; }
-.map { display: block; width: 100%; aspect-ratio: 16 / 10; border: 1px solid var(--border); border-radius: var(--radius); }
 .info { padding-top: 20px; }
 .info h2 { font-size: 1.25rem; font-weight: 600; }
 .info dl { display: grid; grid-template-columns: 90px 1fr; gap: 8px 16px; margin: 16px 0 20px; font-size: 0.9rem; }

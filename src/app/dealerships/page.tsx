@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { api, type Dealership } from "@/lib/api";
+import { DealerMap } from "@/components/dealer-map/dealer-map";
 import { LocateButton } from "@/components/locate-button";
 import { Page, PageHeader } from "@/components/page";
 import styles from "./dealerships.module.css";
@@ -74,7 +75,16 @@ export default async function DealershipsPage({ searchParams }: PageProps<"/deal
           ))}
         </ol>
 
-        {selected && <Details d={selected} />}
+        {selected && (
+          <aside className={styles.details}>
+            <DealerMap
+              dealerships={dealerships.map(({ id, name, lat, lng }) => ({ id, name, lat, lng }))}
+              selectedId={selected.id}
+              user={userPoint}
+            />
+            <Details d={selected} />
+          </aside>
+        )}
       </div>
     </Page>
   );
@@ -82,38 +92,29 @@ export default async function DealershipsPage({ searchParams }: PageProps<"/deal
 
 function Details({ d }: { d: Dealership }) {
   return (
-    <aside className={styles.details}>
-      <iframe key={d.id} className={styles.map} title={`Map of ${d.name}`} src={osmEmbedUrl(d.lat, d.lng)} loading="lazy" />
-      <div className={styles.info}>
-        <h2>{d.name}</h2>
-        <p className="muted">{d.address}</p>
-        <dl>
-          <dt>Distance</dt>
-          <dd>{d.distanceKm} km</dd>
-          <dt>Rating</dt>
-          <dd>{d.rating.toFixed(1)} / 5</dd>
-          <dt>Hours</dt>
-          <dd>{d.hours}</dd>
-          <dt>Phone</dt>
-          <dd>{d.phone}</dd>
-          <dt>Services</dt>
-          <dd>{d.services.join(", ")}</dd>
-        </dl>
-        <div className={styles.actions}>
-          <Link href={`/schedule?dealership=${d.id}`} className="btn">
-            Book here
-          </Link>
-          <a href={`https://www.openstreetmap.org/directions?route=%3B${d.lat}%2C${d.lng}`} target="_blank" rel="noreferrer" className="btn btn-ghost">
-            Directions
-          </a>
-        </div>
+    <div className={styles.info}>
+      <h2>{d.name}</h2>
+      <p className="muted">{d.address}</p>
+      <dl>
+        <dt>Distance</dt>
+        <dd>{d.distanceKm} km</dd>
+        <dt>Rating</dt>
+        <dd>{d.rating.toFixed(1)} / 5</dd>
+        <dt>Hours</dt>
+        <dd>{d.hours}</dd>
+        <dt>Phone</dt>
+        <dd>{d.phone}</dd>
+        <dt>Services</dt>
+        <dd>{d.services.join(", ")}</dd>
+      </dl>
+      <div className={styles.actions}>
+        <Link href={`/schedule?dealership=${d.id}`} className="btn">
+          Book here
+        </Link>
+        <a href={`https://www.openstreetmap.org/directions?route=%3B${d.lat}%2C${d.lng}`} target="_blank" rel="noreferrer" className="btn btn-ghost">
+          Directions
+        </a>
       </div>
-    </aside>
+    </div>
   );
-}
-
-function osmEmbedUrl(lat: number, lng: number) {
-  const d = 0.012;
-  const bbox = [lng - d, lat - d, lng + d, lat + d].join(",");
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
 }
