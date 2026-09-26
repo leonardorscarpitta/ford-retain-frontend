@@ -46,7 +46,7 @@ make prod         # or: docker compose -f compose.prod.yaml up --build
 ```
 
 `Dockerfile`: Next.js `standalone` output on `node:24-alpine`, running as
-non-root. It expects the API on the `ford-retain` network (ford-retain-backend's
+non-root, with npm removed from the runtime image (it only runs `node server.js`). It expects the API on the `ford-retain` network (ford-retain-backend's
 `make prod`), or set `API_URL`.
 
 ## Architecture
