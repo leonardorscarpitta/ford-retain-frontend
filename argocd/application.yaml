@@ -1,0 +1,22 @@
+# Apply once to the cluster (kubectl apply -n argocd -f argocd/application.yaml).
+# Argo CD then deploys deploy/ from master, i.e. after develop is merged.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ford-retain-frontend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitea.lucasggmoreira.com.br/neo/ford-retain-frontend.git
+    targetRevision: master
+    path: deploy
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ford-retain
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

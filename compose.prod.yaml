@@ -1,0 +1,15 @@
+# Production-like image from the Dockerfile: `make prod`. Expects the API on
+# the `ford-retain` network (ford-retain-backend's `make prod`), or set API_URL.
+services:
+  frontend:
+    build: .
+    environment:
+      API_URL: "${API_URL:-http://backend:8080}"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+networks:
+  default:
+    name: ford-retain
+    external: true

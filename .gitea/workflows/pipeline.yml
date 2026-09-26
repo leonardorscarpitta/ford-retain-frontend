@@ -1,0 +1,203 @@
+# DevSecOps pipeline (Gitea Actions). Runs on every push to develop:
+#
+#   secrets ─┐
+#   sast ────┼─► build-test ─► container-scan ─┐
+#   sca ─────┘               └► dast ───────────┴─► release (GitOps)
+#
+# `release` only runs when every gate passed: it bumps the image tag in
+# deploy/kustomization.yaml on develop, which Argo CD syncs once merged to master.
+# Tools run from pinned, checksum-verified releases; none needs an account.
+name: pipeline
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  REGISTRY: gitea.lucasggmoreira.com.br
+  IMAGE: gitea.lucasggmoreira.com.br/${{ gitea.repository }}
+  GITLEAKS_VERSION: 8.30.1
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+  SEMGREP_VERSION: 1.178.0
+  SYFT_VERSION: 1.52.0
+  SYFT_SHA256: caeedb81fb0491615f1ebd1761e4145d41ee86dd2cc7bf80669f9f5ad9d6133d
+  GRYPE_VERSION: 0.119.0
+  GRYPE_SHA256: 3fa2dc4b924621ab65404cf08d0b8438d896d80ab949c9d5a4ca283c36004c9b
+  ZAP_IMAGE: zaproxy/zap-stable:2.17.0@sha256:71db37cd5b75663b35758d10aaec05bf6fbac23f5020e3046c70e628a5f84efa
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  secrets:
+    name: Exposed credential check (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # scan the whole history, not just the last commit
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tgz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tgz -C /usr/local/bin gitleaks
+      - name: Scan git history
+        run: gitleaks git --redact --verbose --exit-code 1 .
+
+  sast:
+    name: SAST (semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install semgrep
+        run: |
+          python3 -m venv /tmp/semgrep
+          /tmp/semgrep/bin/pip install --quiet "semgrep==${SEMGREP_VERSION}"
+      - name: Scan source and Dockerfile
+        run: |
+          /tmp/semgrep/bin/semgrep scan --metrics=off --error \
+            --config p/javascript --config p/typescript --config p/react \
+            --config p/dockerfile \
+            --exclude node_modules --exclude .next
+
+  sca:
+    name: SCA + SBOM (syft, grype)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install syft and grype
+        run: |
+          curl -sSfL -o /tmp/syft.tgz "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz"
+          echo "${SYFT_SHA256}  /tmp/syft.tgz" | sha256sum -c -
+          tar -xzf /tmp/syft.tgz -C /usr/local/bin syft
+          curl -sSfL -o /tmp/grype.tgz "https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_amd64.tar.gz"
+          echo "${GRYPE_SHA256}  /tmp/grype.tgz" | sha256sum -c -
+          tar -xzf /tmp/grype.tgz -C /usr/local/bin grype
+      - name: Generate SBOM (CycloneDX) from package-lock.json
+        run: syft scan file:package-lock.json -o cyclonedx-json=sbom.cdx.json
+      - name: Scan dependencies (fail on fixable high/critical)
+        run: grype sbom:sbom.cdx.json --only-fixed --fail-on high
+      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3.2.1
+        if: always()
+        with:
+          name: sbom
+          path: sbom.cdx.json
+
+  build-test:
+    name: Build + Tests
+    needs: [secrets, sast, sca]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build (type-checks)
+        run: npm run build
+      - name: Build image
+        run: docker build -t "${IMAGE}:${{ gitea.sha }}" .
+      - name: Smoke test the image
+        run: |
+          name="smoke-${{ gitea.run_id }}"
+          docker run -d --name "$name" "${IMAGE}:${{ gitea.sha }}"
+          for i in $(seq 1 30); do
+            if docker exec "$name" wget -q -O /dev/null http://127.0.0.1:3000/login; then
+              echo "login page served"; exit 0
+            fi
+            sleep 2
+          done
+          docker logs "$name"; exit 1
+      - name: Remove smoke test container
+        if: always()
+        run: docker rm -f "smoke-${{ gitea.run_id }}" || true
+      - name: Push candidate image
+        # The image is pushed as a candidate; it only reaches a cluster once
+        # `release` writes its tag into deploy/ after every scan passed.
+        run: |
+          echo "${{ secrets.CI_TOKEN }}" | docker login "${REGISTRY}" -u "${{ secrets.CI_USERNAME }}" --password-stdin
+          docker push "${IMAGE}:${{ gitea.sha }}"
+          docker logout "${REGISTRY}"
+
+  container-scan:
+    name: Container scan (grype)
+    needs: build-test
+    runs-on: ubuntu-latest
+    env:
+      GRYPE_REGISTRY_AUTH_AUTHORITY: gitea.lucasggmoreira.com.br
+      GRYPE_REGISTRY_AUTH_USERNAME: ${{ secrets.CI_USERNAME }}
+      GRYPE_REGISTRY_AUTH_PASSWORD: ${{ secrets.CI_TOKEN }}
+    steps:
+      - name: Install grype
+        run: |
+          curl -sSfL -o /tmp/grype.tgz "https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_amd64.tar.gz"
+          echo "${GRYPE_SHA256}  /tmp/grype.tgz" | sha256sum -c -
+          tar -xzf /tmp/grype.tgz -C /usr/local/bin grype
+      - name: Scan image (fail on fixable high/critical)
+        run: grype "registry:${IMAGE}:${{ gitea.sha }}" --only-fixed --fail-on high
+
+  dast:
+    name: DAST (OWASP ZAP baseline)
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Start the app
+        # Containers talk over their own network (no bind mounts), so this also
+        # works when the runner shares the host's Docker daemon.
+        run: |
+          echo "${{ secrets.CI_TOKEN }}" | docker login "${REGISTRY}" -u "${{ secrets.CI_USERNAME }}" --password-stdin
+          docker network create "dast-${{ gitea.run_id }}"
+          docker run -d --name "app-${{ gitea.run_id }}" --network "dast-${{ gitea.run_id }}" "${IMAGE}:${{ gitea.sha }}"
+          docker logout "${REGISTRY}"
+          for i in $(seq 1 30); do
+            docker exec "app-${{ gitea.run_id }}" wget -q -O /dev/null http://127.0.0.1:3000/login && exit 0
+            sleep 2
+          done
+          docker logs "app-${{ gitea.run_id }}"; exit 1
+      - name: ZAP baseline scan
+        # Fails on any WARN/FAIL alert. Accepted risks go in .zap/rules.tsv.
+        run: |
+          docker create --name "zap-${{ gitea.run_id }}" --network "dast-${{ gitea.run_id }}" \
+            --entrypoint sh "${ZAP_IMAGE}" -c \
+            "mkdir -p /zap/wrk && cp /tmp/rules.tsv /zap/wrk/rules.tsv && \
+             zap-baseline.py -t http://app-${{ gitea.run_id }}:3000 -c rules.tsv -r zap-report.html -J zap-report.json"
+          docker cp .zap/rules.tsv "zap-${{ gitea.run_id }}:/tmp/rules.tsv"
+          docker start -a "zap-${{ gitea.run_id }}"
+      - name: Collect ZAP report
+        if: always()
+        run: docker cp "zap-${{ gitea.run_id }}:/zap/wrk/." zap-report || true
+      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3.2.1
+        if: always()
+        with:
+          name: zap-report
+          path: zap-report/zap-report.*
+      - name: Clean up
+        if: always()
+        run: |
+          docker rm -f "zap-${{ gitea.run_id }}" "app-${{ gitea.run_id }}" || true
+          docker network rm "dast-${{ gitea.run_id }}" || true
+
+  release:
+    name: Release (GitOps tag bump)
+    needs: [container-scan, dast]
+    # Manual runs can target any branch; only a push to develop may release.
+    if: gitea.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: develop
+          token: ${{ secrets.CI_TOKEN }}
+      - name: Point deploy/ at the scanned image
+        run: |
+          sed -i "s/^\(\s*newTag:\).*/\1 ${{ gitea.sha }}/" deploy/kustomization.yaml
+          git diff --quiet && { echo "already at ${{ gitea.sha }}"; exit 0; }
+          git config user.name "ford-retain-ci"
+          git config user.email "ci@ford-retain.invalid"
+          git commit -am "chore(deploy): release frontend image ${{ gitea.sha }} [skip ci]"
+          git push origin HEAD:develop

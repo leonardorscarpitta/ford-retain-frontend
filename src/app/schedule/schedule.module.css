@@ -1,0 +1,23 @@
+.layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: start; }
+.formPanel { position: sticky; top: 92px; }
+.section { margin-bottom: 40px; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.row {
+  display: grid; grid-template-columns: 64px 1fr auto; gap: 16px; align-items: start;
+  padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
+}
+.row:first-child { border-top: 1px solid var(--border); }
+.date { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.year + .year { margin-top: 24px; }
+.year h3 { font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 40px; }
+  .formPanel { position: static; }
+}
+@media (max-width: 520px) {
+  .row { grid-template-columns: 56px 1fr; }
+  .row > form { grid-column: 2; justify-content: flex-start; }
+}

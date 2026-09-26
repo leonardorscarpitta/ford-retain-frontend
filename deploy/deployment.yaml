@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ford-retain-frontend
+  labels:
+    app: ford-retain-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ford-retain-frontend
+  template:
+    metadata:
+      labels:
+        app: ford-retain-frontend
+    spec:
+      imagePullSecrets:
+        - name: gitea-registry
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000 # `node` user in the image
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          image: gitea.lucasggmoreira.com.br/neo/ford-retain-frontend
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: API_URL
+              value: http://ford-retain-backend:8080
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: http
+          livenessProbe:
+            tcpSocket:
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            # Next.js writes its image/data cache here; everything else is read-only.
+            - name: next-cache
+              mountPath: /app/.next/cache
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: next-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

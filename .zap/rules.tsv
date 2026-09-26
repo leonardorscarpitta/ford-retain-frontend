@@ -1,0 +1,5 @@
+# ZAP baseline rule overrides: <rule id>	<IGNORE|WARN|FAIL>	<reason>
+# Only add a rule here as an accepted, justified risk.
+10031	IGNORE	(login reflects ?next= into a hidden input: React escapes attribute values, and safeNext() in actions.ts only redirects to same-origin paths)
+10111	IGNORE	(informational: marks the login form, not a vulnerability)
+10202	IGNORE	(forms post to Server Actions, which Next.js only accepts as POST with an Origin matching Host; the session cookie is SameSite=Lax)
