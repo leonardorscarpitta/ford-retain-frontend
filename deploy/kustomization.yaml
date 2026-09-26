@@ -9,4 +9,4 @@ resources:
   - ingress.yaml
 images:
   - name: gitea.lucasggmoreira.com.br/neo/ford-retain-frontend
-    newTag: unreleased
+    newTag: 6bfd1d6354d257eecdcdf1280f9e68c3f0b5267a
