@@ -78,6 +78,11 @@ browser ──cookie──► Next.js ──Authorization: Bearer──► API
   requests without a session cookie to `/login?next=…`, and any `401` from the
   API redirects through `/auth/expired`, which clears the cookie.
 - The login page lists the demo accounts in development builds only.
+- **Security headers:** `src/proxy.ts` also sets a per-request nonce
+  Content-Security-Policy on every page (Next.js applies the nonce to its own
+  scripts and styles). Loading anything from a new origin (a tile provider, a
+  CDN) means adding it to that CSP. `next.config.ts` adds `X-Content-Type-Options`
+  and `X-Frame-Options` to every response and turns off `X-Powered-By`.
 
 ## Code layout
 
