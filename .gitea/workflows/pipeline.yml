@@ -12,8 +12,6 @@ name: pipeline
 on:
   push:
     branches: [develop]
-    paths-ignore:
-      - "deploy/**"
   workflow_dispatch:
 
 env:
