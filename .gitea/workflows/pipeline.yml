@@ -183,6 +183,8 @@ jobs:
   release:
     name: Release (GitOps tag bump)
     needs: [container-scan, dast]
+    # Manual runs can target any branch; only a push to develop may release.
+    if: gitea.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

@@ -215,7 +215,7 @@ Branches follow git flow: `master` (releases), `develop` (integration),
 | Build + Tests | `npm ci`, lint, `next build` (type-checks), `docker build`, smoke test of the image; pushes it as `:<commit sha>` | any error |
 | Container scan | grype on the pushed image | fixable high/critical CVE |
 | DAST | [OWASP ZAP](https://www.zaproxy.org) baseline against the running image (report in the `zap-report` artifact) | any WARN/FAIL alert |
-| Release | writes the image SHA to `deploy/kustomization.yaml` on `develop` (`[skip ci]`) | |
+| Release | writes the image SHA to `deploy/kustomization.yaml` on `develop` (`[skip ci]`); pushes only, skipped on manual runs | |
 
 The first three stages run in parallel; container scan and DAST run in
 parallel after the build. None of the tools needs an account: they are pinned
