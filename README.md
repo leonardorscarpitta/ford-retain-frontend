@@ -188,7 +188,7 @@ it, dealerships are sorted from central São Paulo.
 ## Development
 
 ```sh
-make check   # npm ci, lint, production build (type-checks), in Docker, the same checks as CI
+make check   # npm ci, lint, production build (type-checks), in Docker, the build checks the pipeline runs
 make lint
 ```
 
@@ -198,12 +198,49 @@ Any other npm/next command through Docker:
 docker run --rm -it -u $(id -u):$(id -g) -e HOME=/tmp -v "$PWD":/app -w /app node:24-alpine npm run lint
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same checks on pushes to `master` and
-`develop` and on pull requests.
-
 Branches follow git flow: `master` (releases), `develop` (integration),
 `feat/*` and `bugfix/*` for work. Commits follow
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+## CI/CD pipeline
+
+`.gitea/workflows/pipeline.yml` (Gitea Actions) runs on every push to
+`develop`. Each stage is a job, and a job fails the pipeline:
+
+| Stage | Tool | Fails on |
+|-------|------|----------|
+| Exposed credential check | [gitleaks](https://github.com/gitleaks/gitleaks), whole git history | any leaked secret |
+| SAST | [semgrep](https://semgrep.dev) CE (`p/javascript`, `p/typescript`, `p/react`, `p/dockerfile`) | any finding |
+| SCA + SBOM | [syft](https://github.com/anchore/syft) (CycloneDX SBOM, kept as the `sbom` artifact) + [grype](https://github.com/anchore/grype) | fixable high/critical CVE |
+| Build + Tests | `npm ci`, lint, `next build` (type-checks), `docker build`, smoke test of the image; pushes it as `:<commit sha>` | any error |
+| Container scan | grype on the pushed image | fixable high/critical CVE |
+| DAST | [OWASP ZAP](https://www.zaproxy.org) baseline against the running image (report in the `zap-report` artifact) | any WARN/FAIL alert |
+| Release | writes the image SHA to `deploy/kustomization.yaml` on `develop` (`[skip ci]`) | |
+
+The first three stages run in parallel; container scan and DAST run in
+parallel after the build. None of the tools needs an account: they are pinned
+releases verified by SHA-256 (the ZAP image and the actions are pinned by digest/commit).
+To accept a DAST alert as a known risk, add its rule to `.zap/rules.tsv`
+(`<id>\tIGNORE\t<reason>`) with a justification.
+
+**Deployment (GitOps).** `deploy/` is a Kustomize app (Deployment + Service,
+non-root, read-only root filesystem). An image is only deployable once `release`
+writes its tag there, i.e. after every gate passed. `argocd/application.yaml` points
+Argo CD at `deploy/` on `master`, so a release reaches the cluster when `develop`
+is merged into `master`. Apply it once with
+`kubectl apply -n argocd -f argocd/application.yaml`.
+
+**Setup.**
+
+- Repository secrets: `CI_USERNAME` (the Gitea user owning the token) and
+  `CI_TOKEN`, a Gitea access token with `write:package` (push/pull the image) and
+  `write:repository` (the release commit). If `develop` is protected, allow
+  that user to push.
+- Runner: an `act_runner` with the `ubuntu-latest` label on an image that has
+  Docker CLI, Node and Python (e.g. `gitea/runner-images:ubuntu-latest`), with the
+  Docker socket available to jobs (act_runner's default).
+- Cluster: an image pull secret named `gitea-registry` in the `ford-retain`
+  namespace, and the API reachable as `ford-retain-backend:8080`.
 
 ## Next steps
 

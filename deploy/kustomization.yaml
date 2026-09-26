@@ -1,0 +1,11 @@
+# Argo CD syncs this directory. CI's `release` job rewrites newTag to the
+# commit SHA of an image that passed every pipeline gate; don't edit it by hand.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ford-retain
+resources:
+  - deployment.yaml
+  - service.yaml
+images:
+  - name: gitea.lucasggmoreira.com.br/neo/ford-retain-frontend
+    newTag: unreleased

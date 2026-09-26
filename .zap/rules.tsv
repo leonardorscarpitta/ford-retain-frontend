@@ -1,0 +1,2 @@
+# ZAP baseline rule overrides: <rule id>	<IGNORE|WARN|FAIL>	<reason>
+# Only add a rule here as an accepted, justified risk.
