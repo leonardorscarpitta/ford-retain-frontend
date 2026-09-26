@@ -223,8 +223,8 @@ releases verified by SHA-256 (the ZAP image and the actions are pinned by digest
 To accept a DAST alert as a known risk, add its rule to `.zap/rules.tsv`
 (`<id>\tIGNORE\t<reason>`) with a justification.
 
-**Deployment (GitOps).** `deploy/` is a Kustomize app (Deployment + Service,
-non-root, read-only root filesystem). An image is only deployable once `release`
+**Deployment (GitOps).** `deploy/` is a Kustomize app (Deployment, Service and
+a Traefik Ingress; non-root, read-only root filesystem). An image is only deployable once `release`
 writes its tag there, i.e. after every gate passed. `argocd/application.yaml` points
 Argo CD at `deploy/` on `master`, so a release reaches the cluster when `develop`
 is merged into `master`. Apply it once with
@@ -239,8 +239,46 @@ is merged into `master`. Apply it once with
 - Runner: an `act_runner` with the `ubuntu-latest` label on an image that has
   Docker CLI, Node and Python (e.g. `gitea/runner-images:ubuntu-latest`), with the
   Docker socket available to jobs (act_runner's default).
-- Cluster: an image pull secret named `gitea-registry` in the `ford-retain`
-  namespace, and the API reachable as `ford-retain-backend:8080`.
+- Cluster: see below.
+
+### Linking a K3s + Argo CD environment
+
+Run once on the VM (K3s's `kubectl`). Argo CD pulls from Gitea, so the VM needs
+outbound HTTPS to `gitea.lucasggmoreira.com.br`; nothing has to reach the VM
+from Gitea. Create one more Gitea access token for the cluster, with read-only
+scopes: `read:repository` and `read:package`.
+
+```sh
+TOKEN=<read-only token>; USER=<its Gitea user>
+
+# 1. Let Argo CD read this repository.
+kubectl -n argocd create secret generic repo-ford-retain-frontend \
+  --from-literal=type=git \
+  --from-literal=url=https://gitea.lucasggmoreira.com.br/neo/ford-retain-frontend.git \
+  --from-literal=username="$USER" --from-literal=password="$TOKEN"
+kubectl -n argocd label secret repo-ford-retain-frontend argocd.argoproj.io/secret-type=repository
+
+# 2. Let K3s pull the image from the Gitea registry.
+kubectl create namespace ford-retain
+kubectl -n ford-retain create secret docker-registry gitea-registry \
+  --docker-server=gitea.lucasggmoreira.com.br \
+  --docker-username="$USER" --docker-password="$TOKEN"
+
+# 3. Register the app (from a checkout of this repo, or paste the file).
+kubectl apply -n argocd -f argocd/application.yaml
+```
+
+Argo CD then syncs `deploy/` from `master`. The app is served by K3s's
+Traefik on the VM's IP. Use `https://<vm-ip>` (Traefik's default self-signed
+certificate until there's a domain): the session cookie is `Secure`, so
+signing in over plain HTTP doesn't work. The frontend calls the API at
+`http://ford-retain-backend:8080`, so ford-retain-backend must be deployed in
+the same `ford-retain` namespace under that Service name.
+
+Check it with `kubectl -n argocd get application ford-retain-frontend` (should
+be `Synced`/`Healthy`) and `kubectl -n ford-retain get pods`. Until the first
+release reaches `master`, the image tag is `unreleased` and pods sit in
+`ImagePullBackOff`; that's expected.
 
 ## Next steps
 
